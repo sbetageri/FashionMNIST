@@ -32,6 +32,8 @@ class MyModel(nn.Module):
         x = self.relu(x)
         x = self.maxpool(x)
         x = self.dropout(x)
+
+        x = x.view(x.size()[0], -1)
         
         x = self.fc1(x)
         x = self.relu(x)
