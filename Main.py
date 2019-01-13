@@ -7,15 +7,18 @@ import Utils
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 
-EPOCHS = 10
+EPOCHS = 72
+BATCH_SIZE = 32
+MODEL_LOC = './model/'
+MODEL_NAME = 'fashion_2.pt'
 
 transforms = torchvision.transforms.ToTensor()
 
 trainDataset = torchvision.datasets.FashionMNIST(root='./data', train=True, download=True, transform=transforms)
 testDataset = torchvision.datasets.FashionMNIST(root='./data', train=False, download=True, transform=transforms)
 
-trainLoader = DataLoader(dataset=trainDataset, batch_size=4)
-testLoader = DataLoader(dataset=testDataset, batch_size=4)
+trainLoader = DataLoader(dataset=trainDataset, batch_size=BATCH_SIZE)
+testLoader = DataLoader(dataset=testDataset, batch_size=BATCH_SIZE)
 
 criterion = nn.NLLLoss()
 device = Utils.getDevice()
@@ -26,8 +29,10 @@ model.to(device)
 
 optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
-for i in range(EPOCHS):
+prev_acc = 0
 
+for i in range(EPOCHS):
+    print('\n\n\n\nEpoch : ', i)
     running_acc = 0
     running_loss = 0
     model.train()
@@ -45,11 +50,11 @@ for i in range(EPOCHS):
         running_loss += loss.item()
         running_acc += torch.sum(pred == label).item()
         
-    train_loss = running_loss / len(trainLoader)
-    train_acc = running_acc / len(trainLoader)
+    train_loss = running_loss / (len(trainLoader) * BATCH_SIZE)
+    train_acc = running_acc / (len(trainLoader) * BATCH_SIZE)
     
     print('Training Loss : ', train_loss)
-    print('Training Acc : ', train_acc)
+    print('Training Acc : ', train_acc * 100.0)
     
     test_loss = 0
     test_acc = 0
@@ -66,8 +71,15 @@ for i in range(EPOCHS):
         test_loss += loss.item()
         test_acc += torch.sum(pred == label).item()
     
-    test_loss = test_loss / len(testLoader)
-    test_acc = test_acc / len(testLoader)
-    
+    test_loss = test_loss / (len(testLoader) * BATCH_SIZE)
+    test_acc = test_acc / (len(testLoader) * BATCH_SIZE)
+
     print('Test Loss : ', test_loss)
-    print('Train Acc : ', test_acc)
+    print('Test Acc : ', test_acc * 100.0)
+
+    if prev_acc < test_acc or i == (EPOCHS - 1):
+        prev_acc = test_acc
+        torch.save(model.state_dict(), MODEL_LOC + MODEL_NAME)
+    else:
+        print('Best model is from epoch ', i - 1)
+        break
