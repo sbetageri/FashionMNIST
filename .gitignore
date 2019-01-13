@@ -2,3 +2,4 @@ data/
 .ipynb_checkpoints/
 ._*.py
 __pycache__
+*.pt
